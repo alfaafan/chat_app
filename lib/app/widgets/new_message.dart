@@ -35,22 +35,13 @@ class _NewMessageState extends State<NewMessage> {
       return;
     }
 
+    await ChatRepository().sendMessage(Message(
+        userId: FirebaseAuth.instance.currentUser!.uid,
+        text: _messageController.text,
+        createdAt: DateTime.now()));
+
     FocusScope.of(context).unfocus();
     _messageController.clear();
-
-    final user = FirebaseAuth.instance.currentUser!;
-    final userData = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .get();
-
-    FirebaseFirestore.instance.collection('chat').add({
-      'message': enteredMessage,
-      'createdAt': Timestamp.now(),
-      'userId': user.uid,
-      'username': userData.data()!['username'],
-      'userImage': userData.data()!['image_url'],
-    });
   }
 
   void _pickImage() async {
@@ -92,12 +83,7 @@ class _NewMessageState extends State<NewMessage> {
               icon: const Icon(
                 Icons.send,
               ),
-              onPressed: () async {
-                await ChatRepository().sendMessage(Message(
-                    userId: FirebaseAuth.instance.currentUser!.uid,
-                    text: _messageController.text,
-                    createdAt: DateTime.now()));
-              }),
+              onPressed: _submitMessage),
         ],
       ),
     );
