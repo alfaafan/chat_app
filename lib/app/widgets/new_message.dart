@@ -1,7 +1,13 @@
 //new_message
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase/app/providers/chat_provider.dart';
+import 'package:firebase/data/repositories/chat_repository.dart';
+import 'package:firebase/domain/entities/chat_message.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 class NewMessage extends StatefulWidget {
   const NewMessage({super.key});
@@ -14,6 +20,7 @@ class NewMessage extends StatefulWidget {
 
 class _NewMessageState extends State<NewMessage> {
   final _messageController = TextEditingController();
+  File? _pickedImageFIle;
 
   @override
   void dispose() {
@@ -38,11 +45,24 @@ class _NewMessageState extends State<NewMessage> {
         .get();
 
     FirebaseFirestore.instance.collection('chat').add({
-      'text': enteredMessage,
+      'message': enteredMessage,
       'createdAt': Timestamp.now(),
       'userId': user.uid,
       'username': userData.data()!['username'],
       'userImage': userData.data()!['image_url'],
+    });
+  }
+
+  void _pickImage() async {
+    final pickedImage = await ImagePicker()
+        .pickImage(source: ImageSource.gallery, imageQuality: 50);
+
+    if (pickedImage == null) {
+      return;
+    }
+
+    setState(() {
+      _pickedImageFIle = File(pickedImage.path);
     });
   }
 
@@ -52,6 +72,12 @@ class _NewMessageState extends State<NewMessage> {
       padding: const EdgeInsets.only(left: 15, right: 1, bottom: 14),
       child: Row(
         children: [
+          IconButton(
+              onPressed: () {
+                ChatProvider(chatRepository: ChatRepository())
+                    .pickAndUploadImage();
+              },
+              icon: const Icon(Icons.camera_alt_outlined)),
           Expanded(
             child: TextField(
               controller: _messageController,
@@ -62,12 +88,16 @@ class _NewMessageState extends State<NewMessage> {
             ),
           ),
           IconButton(
-            color: Theme.of(context).colorScheme.primary,
-            icon: const Icon(
-              Icons.send,
-            ),
-            onPressed: _submitMessage,
-          ),
+              color: Theme.of(context).colorScheme.primary,
+              icon: const Icon(
+                Icons.send,
+              ),
+              onPressed: () async {
+                await ChatRepository().sendMessage(Message(
+                    userId: FirebaseAuth.instance.currentUser!.uid,
+                    text: _messageController.text,
+                    createdAt: DateTime.now()));
+              }),
         ],
       ),
     );

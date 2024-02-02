@@ -1,7 +1,9 @@
 //main.dart
 import 'package:firebase/app/pages/auth_page/auth_page.dart';
 import 'package:firebase/app/pages/chat_page/chat.dart';
+import 'package:firebase/app/providers/chat_provider.dart';
 import 'package:firebase/app/services/auth_service.dart';
+import 'package:firebase/data/repositories/chat_repository.dart';
 import 'package:firebase/data/repositories/user_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -16,6 +18,8 @@ void main() async {
       ChangeNotifierProvider(
         create: (ctx) => AuthService(UserRepository()),
       ),
+      ChangeNotifierProvider(
+          create: (ctx) => ChatProvider(chatRepository: ChatRepository()))
     ],
     child: const App(),
   ));
